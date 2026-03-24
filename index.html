@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Потенциальные кондиции</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;600;700&display=swap');
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --surface2: #1e1e24;
+      --accent: #ff4f00;
+      --accent2: #ffb400;
+      --text: #e8e8f0;
+      --muted: #888898;
+      --border: #2a2a35;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 80px 20px 60px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,79,0,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,79,0,.15);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: 'Russo One', sans-serif;
+      font-size: clamp(2.4rem, 7vw, 5.5rem);
+      line-height: 1.05;
+      letter-spacing: -.01em;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2) 70%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin-inline: auto;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Russo One', sans-serif;
+      font-size: 2.2rem;
+      color: var(--accent);
+    }
+    .stat-label { font-size: .8rem; color: var(--muted); margin-top: 2px; letter-spacing: .05em; text-transform: uppercase; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 40px;
+    }
+
+    /* ── ROSTER SECTION ── */
+    .section {
+      max-width: 1200px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    .section-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.6rem;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── CARDS GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      transition: transform .25s, border-color .25s, box-shadow .25s;
+      overflow: hidden;
+      cursor: default;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 40px rgba(255,79,0,.18);
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: var(--radius) var(--radius) 0 0;
+      opacity: 0;
+      transition: opacity .25s;
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Russo One', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      line-height: 1.2;
+    }
+    .card-nickname {
+      font-size: .78rem;
+      color: var(--accent2);
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .card-traits {
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.65;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      letter-spacing: .03em;
+    }
+    .tag.kms { border-color: var(--accent); color: var(--accent); background: rgba(255,79,0,.1); }
+    .tag.academ { border-color: #6b7bff; color: #6b7bff; background: rgba(107,123,255,.1); }
+    .tag.skeleton { border-color: #aaa; color: #aaa; background: rgba(170,170,170,.08); }
+    .tag.fat { border-color: var(--accent2); color: var(--accent2); background: rgba(255,180,0,.1); }
+    .tag.loud { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,107,107,.1); }
+
+    /* ── NEWS ── */
+    .news-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      display: grid;
+      gap: 10px;
+    }
+    .news-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .news-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .news-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .news-textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .news-form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .news-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .news-btn:disabled {
+      opacity: .7;
+      cursor: not-allowed;
+    }
+    .news-status {
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .news-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 0 20px;
+      align-items: start;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .news-item:hover {
+      border-color: var(--accent);
+      box-shadow: 0 6px 24px rgba(255,79,0,.12);
+    }
+    .news-item:first-child {
+      border-color: rgba(255,79,0,.4);
+      background: linear-gradient(135deg, rgba(255,79,0,.06) 0%, var(--surface) 60%);
+    }
+    .news-item:first-child .news-new {
+      display: inline-block;
+    }
+
+    .news-meta {
+      text-align: right;
+      padding-top: 2px;
+    }
+    .news-date {
+      font-size: .75rem;
+      color: var(--muted);
+      display: block;
+    }
+    .news-author {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--accent2);
+      display: block;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .news-body {}
+    .news-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .news-title {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .news-new {
+      display: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: .62rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+    .news-text {
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 540px) {
+      .news-form-grid {
+        grid-template-columns: 1fr;
+      }
+      .news-item {
+        grid-template-columns: 1fr;
+      }
+      .news-meta {
+        text-align: left;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: .82rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    footer span { color: var(--accent); }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">Закрытое сообщество</div>
+    <h1>Потенциальные<br>кондиции</h1>
+    <p class="hero-sub">Элита. Легенды. Братва. Девять человек — одна судьба.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">9</div><div class="stat-label">участников</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">КМС</div></div>
+      <div class="stat"><div class="stat-num">2</div><div class="stat-label">в академе</div></div>
+      <div class="stat"><div class="stat-num">∞</div><div class="stat-label">понтов</div></div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- NEWS -->
+  <section class="section">
+    <h2 class="section-title">Актуальные кондиции</h2>
+    <form class="news-form" id="news-form">
+      <div class="news-form-grid">
+        <input class="news-input" id="news-author" name="author" maxlength="40" placeholder="Автор (необязательно)" />
+        <input class="news-input" id="news-title" name="title" maxlength="100" placeholder="Заголовок" required />
+      </div>
+      <textarea class="news-input news-textarea" id="news-text" name="text" maxlength="500" placeholder="Текст новости" required></textarea>
+      <div class="news-form-actions">
+        <button class="news-btn" id="news-submit" type="submit">Опубликовать новость</button>
+        <div class="news-status" id="news-status">Любой пользователь может добавить новость.</div>
+      </div>
+    </form>
+    <div class="news-list" id="news"></div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ROSTER -->
+  <main class="section">
+    <h2 class="section-title">Состав группы</h2>
+    <div class="grid" id="roster"></div>
+  </main>
+
+  <footer>
+    Сайт группы <span>Потенциальные кондиции</span> · Все совпадения случайны, все правда
+  </footer>
+
+  <script>
+    const members = [
+      {
+        name: "Вадим Лысина",
+        nickname: null,
+        emoji: "💀",
+        color: "#888",
+        traits: "Главный лузер группы. Обожает понтоваться и строить из себя альфу, но все над ним ржут. Худой как скелетик, очень тупой, нытик, громкий — но абсолютно безопасный и безобидный.",
+        tags: [
+          { label: "Скелетик", cls: "skeleton" },
+          { label: "Главный лузер", cls: "" },
+          { label: "Громкий", cls: "loud" },
+        ]
+      },
+      {
+        name: "Санёк",
+        nickname: "Жим-130",
+        emoji: "🏋️",
+        color: "#ffb400",
+        traits: "Жирный качок 130 кг. Считает себя крутым альфой, но на деле просто жирный отаку.",
+        tags: [
+          { label: "130 кг", cls: "fat" },
+          { label: "Качок", cls: "" },
+          { label: "Отаку", cls: "" },
+        ]
+      },
+      {
+        name: "Вован",
+        nickname: null,
+        emoji: "🎮",
+        color: "#6b7bff",
+        traits: "Жирный бородатый пузатый валорантер. Постоянно и много жрёт. Считает себя умным, но путает лево и право. КМС по заявлениям и поеданию всего подряд.",
+        tags: [
+          { label: "КМС", cls: "kms" },
+          { label: "Жирный", cls: "fat" },
+          { label: "Валорантер", cls: "" },
+        ]
+      },
+      {
+        name: "Гошан Цунами",
+        nickname: "Цунами",
+        emoji: "🌊",
+        color: "#00cfff",
+        traits: "Скелетик с тупым ебалом. Постоянно опаздывает на пары на полчаса. Забивной, громкий и опасный. КМС по пиздобольству.",
+        tags: [
+          { label: "КМС", cls: "kms" },
+          { label: "Скелетик", cls: "skeleton" },
+          { label: "Громкий", cls: "loud" },
+          { label: "Опасный", cls: "" },
+        ]
+      },
+      {
+        name: "Данёк 52",
+        nickname: "Пятьдесят второй",
+        emoji: "🍝",
+        color: "#c084fc",
+        traits: "Длинноволосый скелетик. Делает вид, что умный и ходит на все пары. Тихий, но опасный. Бицуха как макароны.",
+        tags: [
+          { label: "Скелетик", cls: "skeleton" },
+          { label: "Тихий", cls: "" },
+          { label: "Опасный", cls: "" },
+        ]
+      },
+      {
+        name: "Питон",
+        nickname: "Питон",
+        emoji: "🐍",
+        color: "#4ade80",
+        traits: "Подкачанный малолетний школьник. Все зовут просто Питон — никто не помнит его настоящее имя. Забивной, громкий и опасный. КМС по армрестлингу.",
+        tags: [
+          { label: "КМС", cls: "kms" },
+          { label: "Армрестлинг", cls: "" },
+          { label: "Громкий", cls: "loud" },
+          { label: "Опасный", cls: "" },
+        ]
+      },
+      {
+        name: "Лев",
+        nickname: null,
+        emoji: "🦁",
+        color: "#fbbf24",
+        traits: "Скелетик. Лев внатуре тигр. Всегда приходит на все пары, делает вид, что умный типочек.",
+        tags: [
+          { label: "Скелетик", cls: "skeleton" },
+          { label: "Отличник", cls: "" },
+        ]
+      },
+      {
+        name: "Мишаня",
+        nickname: null,
+        emoji: "🍺",
+        color: "#f97316",
+        traits: "Жирный пиздец и дотер. Ленивое существо, ушёл в академический. Обожает пиво и пельмени. Дома стоит кастрюля из-под пельменей с плесенью, где уже живёт внеземная цивилизация.",
+        tags: [
+          { label: "Академический", cls: "academ" },
+          { label: "Жирный", cls: "fat" },
+          { label: "Дотер", cls: "" },
+          { label: "Пельменовед", cls: "" },
+        ]
+      },
+      {
+        name: "Азиз",
+        nickname: null,
+        emoji: "🥊",
+        color: "#ef4444",
+        traits: "Мелкий чёрный боксёр из Африки. Забивной, громкий и опасный. КМС по боксу. Ушёл в академический, потому что в Африке вода кончилась.",
+        tags: [
+          { label: "КМС", cls: "kms" },
+          { label: "Бокс", cls: "" },
+          { label: "Академический", cls: "academ" },
+          { label: "Громкий", cls: "loud" },
+          { label: "Опасный", cls: "" },
+        ]
+      },
+    ];
+
+    // ── News API ──
+    const NEWS_API_URL = '/.netlify/functions/news';
+    const LOCAL_NEWS_KEY = 'pc_local_news_fallback';
+    const newsList = document.getElementById('news');
+    const newsForm = document.getElementById('news-form');
+    const newsSubmit = document.getElementById('news-submit');
+    const newsStatus = document.getElementById('news-status');
+
+    function getTodayRU() {
+      return new Date().toLocaleDateString('ru-RU');
+    }
+
+    function getLocalNews() {
+      try {
+        const raw = localStorage.getItem(LOCAL_NEWS_KEY);
+        const data = raw ? JSON.parse(raw) : [];
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function setLocalNews(newsItems) {
+      localStorage.setItem(LOCAL_NEWS_KEY, JSON.stringify(newsItems.slice(0, 100)));
+    }
+
+    async function parseJsonResponse(response) {
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Сервер новостей недоступен (вернулся HTML).');
+      }
+      return response.json();
+    }
+
+    function renderNews(newsItems) {
+      newsList.innerHTML = '';
+      newsItems.forEach((n, index) => {
+        const item = document.createElement('article');
+        item.className = 'news-item';
+        item.innerHTML = `
+          <div class="news-meta">
+            <span class="news-date">${n.date || ''}</span>
+            ${n.author ? `<span class="news-author">${n.author}</span>` : ''}
+          </div>
+          <div class="news-body">
+            <div class="news-header">
+              <span class="news-title">${n.title || ''}</span>
+              ${index === 0 ? '<span class="news-new">NEW</span>' : ''}
+            </div>
+            <p class="news-text">${n.text || ''}</p>
+          </div>
+        `;
+        newsList.appendChild(item);
+      });
+    }
+
+    async function loadNews() {
+      try {
+        const response = await fetch(NEWS_API_URL);
+        if (!response.ok) throw new Error('Не удалось загрузить новости');
+        const data = await parseJsonResponse(response);
+        renderNews(Array.isArray(data.news) ? data.news : []);
+        newsStatus.textContent = 'Любой пользователь может добавить новость.';
+      } catch (error) {
+        const localNews = getLocalNews();
+        renderNews(localNews);
+        newsStatus.textContent = 'API недоступно, включен локальный режим (только на этом устройстве).';
+      }
+    }
+
+    newsForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const author = document.getElementById('news-author').value.trim();
+      const title = document.getElementById('news-title').value.trim();
+      const text = document.getElementById('news-text').value.trim();
+
+      if (!title || !text) {
+        newsStatus.textContent = 'Заполни заголовок и текст.';
+        return;
+      }
+
+      newsSubmit.disabled = true;
+      newsStatus.textContent = 'Публикую новость...';
+
+      try {
+        const response = await fetch(NEWS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author, title, text })
+        });
+        const data = await parseJsonResponse(response);
+        if (!response.ok) {
+          throw new Error(data.error || 'Ошибка публикации');
+        }
+
+        newsForm.reset();
+        newsStatus.textContent = 'Новость опубликована.';
+        renderNews(Array.isArray(data.news) ? data.news : []);
+      } catch (error) {
+        const localNews = getLocalNews();
+        const localItem = {
+          date: getTodayRU(),
+          author: author || 'Аноним',
+          title,
+          text
+        };
+        const updatedLocalNews = [localItem, ...localNews];
+        setLocalNews(updatedLocalNews);
+        newsForm.reset();
+        renderNews(updatedLocalNews);
+        newsStatus.textContent = 'API недоступно: новость сохранена локально в этом браузере.';
+      } finally {
+        newsSubmit.disabled = false;
+      }
+    });
+
+    loadNews();
+
+    // ── Render roster ──
+    const roster = document.getElementById('roster');
+
+    members.forEach(m => {
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const tagsHtml = m.tags.map(t =>
+        `<span class="tag ${t.cls}">${t.label}</span>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="card-avatar" style="background:${m.color}22; color:${m.color}; border-color:${m.color}44">
+            ${m.emoji}
+          </div>
+          <div>
+            <div class="card-name">${m.name}</div>
+            ${m.nickname ? `<div class="card-nickname">${m.nickname}</div>` : ''}
+          </div>
+        </div>
+        <p class="card-traits">${m.traits}</p>
+        <div class="card-tags">${tagsHtml}</div>
+      `;
+
+      roster.appendChild(card);
+    });
+  </script>
+</body>
+</html>
