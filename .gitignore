@@ -1,5 +1,6 @@
 node_modules/
-.env
+dist/
 data/
-*.log
-.DS_Store
+.env
+test-results/
+.browser-data/
