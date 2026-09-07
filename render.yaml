@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: potential-conditions-site
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+    # Чтобы новости переживали redeploy/restart, добавь Persistent Disk
+    # в Render Dashboard и укажи Mount Path: /var/data.
+    # На Free-плане Persistent Disk недоступен, поэтому без него
+    # данные, записанные после деплоя, могут быть потеряны.

@@ -1,8 +1,16 @@
 {
   "name": "potential-conditions-site",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
+  "description": "Potential Conditions website for Render",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "express": "^5.1.0"
   }
 }
