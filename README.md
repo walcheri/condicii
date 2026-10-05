@@ -47,4 +47,17 @@ npm start
 
 ## Render
 
+Для сервиса, созданного вручную, задай в Render → Settings:
+
+- Тип сервиса: Web Service, среда Node.
+- Root Directory: пустое поле (корень репозитория с `package.json`).
+- Build Command: `npm ci --include=dev && npm run build`.
+- Start Command: `npm start`.
+- Health Check Path: `/api/health`.
+- Переменные окружения: `NODE_VERSION=24.13.0`, `NODE_ENV=production`.
+
+Сохрани настройки и запусти новый деплой. Эти же команды указаны в `render.yaml` для Blueprint. Для вручную созданного сервиса настрой команды в Dashboard.
+
+Ошибка `ENOENT ... dist/index.html` означает, что сервер запущен без собранного фронтенда. В логе сборки должен быть успешный `vite build` с файлом `dist/index.html`. Флаг `--include=dev` устанавливает Vite и React-плагин даже при `NODE_ENV=production`. Проект использует npm и `package-lock.json`; предупреждения Yarn `No lockfile found` и `package-lock.json found` означают, что установка запущена через Yarn. Замени её на указанную Build Command, сохранив `package-lock.json`. Каталог `dist/` создаётся при деплое и не хранится в Git.
+
 `render.yaml` запускает сборку фронтенда и Express на Node.js 24. Для сохранения SQLite между деплоями подключи Persistent Disk с точкой монтирования `/var/data` и установи `DATA_DIR=/var/data`. Без постоянного диска данные сбрасываются при пересоздании контейнера. База рассчитана на один экземпляр приложения с локальным диском.
