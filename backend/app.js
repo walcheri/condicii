@@ -1,9 +1,10 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomBytes, randomUUID, createHash } from "node:crypto";
+import { createHash } from "node:crypto";
 import { openDatabase, transaction } from "./database.js";
 import { catalog, findSkin } from "./catalog.js";
+import { installAuth } from "./auth.js";
 import { quote, performUpgrade, fail } from "./upgrades.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -44,51 +45,16 @@ export function createApp({
     db.prepare("SELECT 1").get();
     res.json({ ok: true });
   });
+  installAuth(app, db, { production, hash });
   app.get("/api/catalog", (req, res) => res.json({ catalog }));
   app.get("/api/news", (req, res) =>
     res.json({
       news: db.prepare("SELECT * FROM news ORDER BY id DESC LIMIT 100").all(),
     }),
   );
-  app.use("/api", (req, res, next) => {
-    const cookie = req.headers.cookie
-      ?.split(";")
-      .map((c) => c.trim())
-      .find((c) => c.startsWith("pc_session="))
-      ?.slice(11);
-    const session =
-      cookie &&
-      db
-        .prepare("SELECT user_id FROM sessions WHERE token = ? AND expires > ?")
-        .get(hash(cookie), Date.now());
-    if (session) req.userId = session.user_id;
-    else {
-      const token = randomBytes(32).toString("hex");
-      req.userId = randomUUID();
-      transaction(db, () => {
-        db.prepare("INSERT INTO users(id, balance) VALUES (?, 2500)").run(
-          req.userId,
-        );
-        db.prepare(
-          "INSERT INTO sessions(token, user_id, expires) VALUES (?, ?, ?)",
-        ).run(hash(token), req.userId, Date.now() + 365 * 86400000);
-        for (const skinId of ["p250", "glock", "mp9"])
-          db.prepare(
-            "INSERT INTO inventory(id, user_id, skin_id) VALUES (?, ?, ?)",
-          ).run(randomUUID(), req.userId, skinId);
-      });
-      res.cookie("pc_session", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: production,
-        maxAge: 365 * 86400000,
-        path: "/",
-      });
-    }
-    next();
-  });
   function state(userId) {
     return {
+      username: db.prepare("SELECT display_name FROM credentials WHERE user_id = ?").get(userId)?.display_name,
       balance: db.prepare("SELECT balance FROM users WHERE id = ?").get(userId)
         .balance,
       inventory: db
@@ -133,7 +99,7 @@ export function createApp({
   app.post("/api/news", (req, res) => {
     const clean = (value, max) =>
       typeof value === "string" ? value.trim().slice(0, max) : "";
-    const author = clean(req.body?.author, 40) || "Аноним";
+    const author = req.username;
     const title = clean(req.body?.title, 100);
     const text = clean(req.body?.text, 500);
     if (!title || !text) fail("Заполните заголовок и текст.");

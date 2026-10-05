@@ -15,20 +15,20 @@ function setup(t) {
   db.prepare("INSERT INTO inventory VALUES (?, ?, ?)").run(
     "item-alice",
     "alice",
-    "p250",
+    "watermelon",
   );
   return db;
 }
 const balanceInput = {
   mode: "balance",
   amount: 250,
-  targetId: "ak",
+  targetId: "gta6",
   requestId: "request-0001",
 };
 const skinInput = {
   mode: "skin",
   inventoryId: "item-alice",
-  targetId: "glock",
+  targetId: "pumpkin",
   requestId: "request-0002",
 };
 
@@ -55,7 +55,7 @@ test("Победа списывает Минетки и выдаёт ровно 
       .get("alice").n,
     2,
   );
-  assert.equal(result.reward.id, "ak");
+  assert.equal(result.reward.id, "gta6");
 });
 test("Проигрыш сжигает баланс без выдачи награды", (t) => {
   const db = setup(t);
@@ -74,7 +74,7 @@ test("Граница выигрышного сектора точная", (t) =>
     performUpgrade(
       db,
       "alice",
-      { ...balanceInput, amount: 100, targetId: "glock" },
+      { ...balanceInput, amount: 100, targetId: "pumpkin" },
       () => 399999,
     ).won,
     true,
@@ -86,7 +86,7 @@ test("Граница выигрышного сектора точная", (t) =>
       {
         ...balanceInput,
         amount: 100,
-        targetId: "glock",
+        targetId: "pumpkin",
         requestId: "boundary-002",
       },
       () => 400000,
@@ -101,14 +101,14 @@ test("Скин при победе заменяется на цель, при п
     db.prepare("SELECT id FROM inventory WHERE id = ?").get("item-alice"),
     undefined,
   );
-  assert.equal(win.reward.id, "glock");
+  assert.equal(win.reward.id, "pumpkin");
   performUpgrade(
     db,
     "alice",
     {
       ...skinInput,
       inventoryId: win.reward.inventoryId,
-      targetId: "ak",
+      targetId: "gta6",
       requestId: "skin-loss-003",
     },
     () => 999999,
@@ -128,7 +128,7 @@ test("Повтор запроса возвращает старый резуль
   assert.deepEqual(second, first);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM upgrades").get().n, 1);
   assert.throws(
-    () => performUpgrade(db, "alice", { ...skinInput, targetId: "ak" }),
+    () => performUpgrade(db, "alice", { ...skinInput, targetId: "gta6" }),
     /другой ставки/,
   );
 });
@@ -140,7 +140,7 @@ test("Нельзя ставить чужой предмет, отрицател�
       performUpgrade(db, "alice", { ...balanceInput, amount }),
     );
   assert.throws(
-    () => quote(db, "alice", { ...balanceInput, targetId: "p250" }),
+    () => quote(db, "alice", { ...balanceInput, targetId: "watermelon" }),
     /дороже/,
   );
   assert.throws(
@@ -212,13 +212,18 @@ test("HTTP: отдельные сессии, продажа, новости, CSR
     db.close();
   });
   const url = `http://127.0.0.1:${server.address().port}/api`;
-  const first = await fetch(`${url}/me`);
+  const register = (username) => fetch(`${url}/auth/register`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ username, password: "test-password-123" }),
+  });
+  const first = await register("alice");
   const cookie = first.headers.get("set-cookie").split(";")[0];
-  const me = await first.json();
+  const me = await (await fetch(`${url}/me`, { headers: { cookie } })).json();
   assert.equal(me.balance, 2500);
   assert.equal(me.inventory.length, 3);
   assert.match(first.headers.get("set-cookie"), /HttpOnly/);
-  const other = await (await fetch(`${url}/me`)).json();
+  const otherCookie = (await register("bob")).headers.get("set-cookie").split(";")[0];
+  const other = await (await fetch(`${url}/me`, { headers: { cookie: otherCookie } })).json();
   assert.notEqual(other.inventory[0].inventoryId, me.inventory[0].inventoryId);
   const post = (route, body, extra = {}) =>
     fetch(`${url}${route}`, {
@@ -260,18 +265,18 @@ test("HTTP: отдельные сессии, продажа, новости, CSR
   });
   assert.equal(news.status, 201);
   assert.equal((await news.json()).news[0].title, "Тест");
-  assert.equal((await fetch(`${url}/missing`)).status, 404);
+  assert.equal((await fetch(`${url}/missing`, { headers: { cookie } })).status, 404);
   const parallel = await Promise.all([
     post("/upgrade", {
       ...balanceInput,
       amount: 2000,
-      targetId: "awp",
+      targetId: "zalma",
       requestId: "parallel-001",
     }),
     post("/upgrade", {
       ...balanceInput,
       amount: 2000,
-      targetId: "awp",
+      targetId: "zalma",
       requestId: "parallel-002",
     }),
   ]);

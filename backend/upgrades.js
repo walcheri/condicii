@@ -26,7 +26,7 @@ export function quote(db, userId, input) {
     if (!item) fail("Этот предмет отсутствует в вашем инвентаре.");
     source = { ...findSkin(item.skin_id), inventoryId: item.id };
     stake = source.price;
-  } else fail("Выберите ставку: скин или Минетки.");
+  } else fail("Выберите ставку: предмет или Минетки.");
   if (target.price <= stake) fail("Цель должна стоить дороже ставки.");
   const threshold = Math.floor((stake / target.price) * 1_000_000);
   return { target, source, stake, chance: threshold / 10_000, threshold };

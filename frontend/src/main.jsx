@@ -3,56 +3,14 @@ import { createRoot } from "react-dom/client";
 import { api } from "./api.js";
 import members from "./members.json";
 import "./style.css";
+import "./vice.css";
+import SkinArt from "./ItemArt.jsx";
+import Coast from "./Coast.jsx";
+import Auth from "./Auth.jsx";
 
 const number = (value) =>
   new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 4 }).format(value);
 const money = (value) => `${number(value)} М`;
-
-function SkinArt({ skin }) {
-  if (!skin) return <div className="skin-art empty-art">＋</div>;
-  return (
-    <div className="skin-art" style={{ "--skin-color": skin.color }}>
-      <svg viewBox="0 0 260 110" aria-hidden="true">
-        <defs>
-          <linearGradient id={`skin-${skin.id}`} x2="1" y2="1">
-            <stop stopColor={skin.color} />
-            <stop offset="1" stopColor="#ddd" />
-          </linearGradient>
-        </defs>
-        <g
-          fill={`url(#skin-${skin.id})`}
-          stroke="#11131a"
-          strokeWidth="2"
-          transform="rotate(-12 130 55)"
-        >
-          {skin.kind === "knife" ? (
-            <>
-              <path d="M30 62 Q80 10 210 30 Q180 67 110 65 L86 84 L72 65Z" />
-              <path d="M30 62 L13 68 L26 84 L72 65 L61 55Z" />
-            </>
-          ) : skin.kind === "pistol" ? (
-            <>
-              <path d="M57 28 H193 V45 H137 L129 66 H99 L86 96 H59 L71 48 H57Z" />
-              <path d="M137 45 H178 V53 H136Z" />
-            </>
-          ) : (
-            <>
-              <path d="M17 42 L65 37 H147 L164 44 H228 V53 H159 L140 64 H104 L91 89 H72 L83 59 H65 L32 76 L17 70Z" />
-              <path d="M120 62 L132 92 H151 L146 60Z" />
-              {skin.kind === "sniper" && (
-                <>
-                  <path d="M89 22 H146 V32 H89Z" />
-                  <path d="M108 30 V40 H128 V30Z" />
-                  <path d="M224 46 H253 V51 H224Z" />
-                </>
-              )}
-            </>
-          )}
-        </g>
-      </svg>
-    </div>
-  );
-}
 
 function ItemCard({ skin, selected, onSelect, disabled }) {
   return (
@@ -65,7 +23,7 @@ function ItemCard({ skin, selected, onSelect, disabled }) {
     >
       <span className="item-check">{selected ? "✓" : "+"}</span>
       <SkinArt skin={skin} />
-      <span className="weapon">{skin.weapon}</span>
+      <span className="weapon">{skin.rarity}</span>
       <span className="skin-name">{skin.name}</span>
       <strong>{money(skin.price)}</strong>
     </button>
@@ -73,9 +31,10 @@ function ItemCard({ skin, selected, onSelect, disabled }) {
 }
 
 function Upgrade({ account, setAccount, catalog, onLock }) {
+  const pendingKey = `pc_pending_upgrade_${account.username}`;
   const [pending, setPending] = useState(() => {
     try {
-      return JSON.parse(sessionStorage.getItem("pc_pending_upgrade") || "null");
+      return JSON.parse(sessionStorage.getItem(pendingKey) || "null");
     } catch {
       return null;
     }
@@ -85,7 +44,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
     pending?.inventoryId || account.inventory[0]?.inventoryId || "",
   );
   const [amount, setAmount] = useState(String(pending?.amount || 250));
-  const [targetId, setTargetId] = useState(pending?.targetId || "ak");
+  const [targetId, setTargetId] = useState(pending?.targetId || "gta6");
   const [estimate, setEstimate] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -162,7 +121,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
       setBusy(false);
       return;
     }
-    sessionStorage.setItem("pc_pending_upgrade", JSON.stringify(operation));
+    sessionStorage.setItem(pendingKey, JSON.stringify(operation));
     setPending(operation);
     try {
       const data = await api("/upgrade", operation);
@@ -178,18 +137,19 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
         ),
       );
       setAccount({
+        ...account,
         balance: data.balance,
         inventory: data.inventory,
         history: data.history,
       });
       setInventoryId("");
       setPending(null);
-      sessionStorage.removeItem("pc_pending_upgrade");
+      sessionStorage.removeItem(pendingKey);
       setResult(data.result);
     } catch (e) {
       if (e.status >= 400 && e.status < 500) {
         setPending(null);
-        sessionStorage.removeItem("pc_pending_upgrade");
+        sessionStorage.removeItem(pendingKey);
         setError(e.message);
         try {
           setAccount(await api("/me"));
@@ -212,7 +172,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
   const targets = catalog.filter(
     (item) =>
       item.price > stake &&
-      `${item.weapon} ${item.name}`
+      `${item.rarity} ${item.name}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
@@ -224,10 +184,10 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
           <h1>
             Прокачай свои <span>кондиции.</span>
           </h1>
-          <p>Выбери ставку, найди скин мечты и испытай удачу.</p>
+          <p>От арбуза до Соляриса. Выбери ставку и испытай удачу.</p>
         </div>
         <span className="mode-badge">
-          <i /> АПГРЕЙД СКИНОВ
+          <i /> АПГРЕЙД ПРЕДМЕТОВ
         </span>
       </div>
       <section className="upgrade-stage" aria-label="Рулетка апгрейда">
@@ -236,12 +196,12 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
           <SkinArt skin={mode === "skin" ? shownSource : null} />
           <h3>
             {mode === "skin"
-              ? shownSource?.weapon || "Выбери предмет"
+              ? shownSource?.name || "Выбери предмет"
               : money(result?.stake ?? stake)}
           </h3>
           <p>
             {mode === "skin"
-              ? shownSource?.name || "Из своего инвентаря ниже"
+              ? shownSource?.rarity || "Из своего инвентаря ниже"
               : "Минетки с твоего баланса"}
           </p>
           <div className="segmented">
@@ -250,7 +210,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
               className={mode === "skin" ? "active" : ""}
               onClick={() => chooseMode("skin")}
             >
-              Скин
+              Предмет
             </button>
             <button
               disabled={busy || !!pending}
@@ -336,13 +296,13 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
         <div className="selection-panel target-panel">
           <span className="eyebrow">02 / ТВОЯ ЦЕЛЬ</span>
           <SkinArt skin={shownTarget} />
-          <h3>{shownTarget?.weapon || "Выбери цель"}</h3>
-          <p>{shownTarget?.name || "Из каталога ниже"}</p>
+          <h3>{shownTarget?.name || "Выбери цель"}</h3>
+          <p>{shownTarget?.rarity || "Из каталога ниже"}</p>
           <strong className="target-price">
             {shownTarget ? money(shownTarget.price) : "—"}
           </strong>
           <span className="target-note">
-            Выигранный скин попадёт в инвентарь
+            Выигранный предмет попадёт в инвентарь
           </span>
         </div>
       </section>
@@ -351,8 +311,8 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
         {result && (
           <p className={result.won ? "success" : "loss"}>
             {result.won
-              ? `Апгрейд удался! ${result.target.weapon} · ${result.target.name} уже в инвентаре.`
-              : `Не повезло. ${result.mode === "skin" ? "Исходный скин" : `Ставка ${money(result.stake)}`} сгорел${result.mode === "skin" ? "" : "а"}.`}
+              ? `Апгрейд удался! ${result.target.name} уже в инвентаре.`
+              : `Не повезло. ${result.mode === "skin" ? "Исходный предмет" : `Ставка ${money(result.stake)}`} сгорел${result.mode === "skin" ? "" : "а"}.`}
           </p>
         )}
       </div>
@@ -377,7 +337,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
           </div>
           {!account.inventory.length && (
             <p className="empty-state">
-              Пока пусто. Используй Минетки, чтобы выиграть новый скин.
+              Пока пусто. Используй Минетки, чтобы выиграть новый предмет.
             </p>
           )}
         </section>
@@ -389,7 +349,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
             <span>⌕</span>
             <input
               aria-label="Поиск предмета"
-              placeholder="Найти свой скин…"
+              placeholder="Найти свой предмет…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               disabled={busy}
@@ -416,7 +376,7 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
       <details className="rules">
         <summary>Как работает апгрейд?</summary>
         <p>
-          Ставкой служит скин из инвентаря или целое число Минеток. Цель всегда
+          Ставкой служит предмет из инвентаря или целое число Минеток. Цель всегда
           дороже ставки. Шанс = стоимость ставки ÷ стоимость цели × 100%
           (округление вниз до 0,0001%). Например, 250 Минеток на предмет за 1
           500 дают 16,6666%.
@@ -427,8 +387,8 @@ function Upgrade({ account, setAccount, catalog, onLock }) {
           на результате операции.
         </p>
         <p>
-          Скины и цены внутриигровые. Старт: 2 500 Минеток и три предмета.
-          Инвентарь привязан к этому браузеру.
+          Предметы и цены внутриигровые. Старт: 2 500 Минеток и три предмета.
+          Инвентарь сохраняется в твоём аккаунте.
         </p>
       </details>
     </>
@@ -458,7 +418,7 @@ function Inventory({ account, setAccount }) {
         <div>
           <span className="eyebrow">ТВОЯ КОЛЛЕКЦИЯ</span>
           <h1>Инвентарь</h1>
-          <p>Оставь скины для апгрейда или обменяй их на Минетки.</p>
+          <p>Оставь предметы для апгрейда или обменяй их на Минетки.</p>
         </div>
       </div>
       {error && (
@@ -509,7 +469,7 @@ function History({ history }) {
             </span>
             <div>
               <strong>
-                {item.target.weapon} · {item.target.name}
+                {item.target.name} · {item.target.rarity}
               </strong>
               <small>{new Date(item.created).toLocaleString("ru-RU")}</small>
             </div>
@@ -551,21 +511,18 @@ function Community({ news, setNews }) {
   }
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">ЗАКРЫТОЕ СООБЩЕСТВО</span>
-          <h1>Потенциальные кондиции</h1>
-          <p>Элита. Легенды. Братва. Семь человек — одна судьба.</p>
+      <section className="community-hero">
+        <Coast />
+        <div className="hero-copy">
+          <span className="eyebrow">ЗАКРЫТОЕ СООБЩЕСТВО / AFTER HOURS</span>
+          <h1>Один город.<br /><span>Свои люди.</span></h1>
+          <p>Элита. Легенды. Братва.<br />Семь человек — одна судьба.</p>
+          <a className="hero-link" href="#crew">Знакомься с братвой <span>↘</span></a>
         </div>
-      </div>
-      <h2>Актуальные кондиции</h2>
+        <span className="hero-edition">ПОТЕНЦИАЛЬНЫЕ<br />КОНДИЦИИ / VI VIBES</span>
+      </section>
+      <div className="section-heading"><span className="eyebrow">01 / НА РАЙОНЕ</span><h2>Актуальные кондиции</h2><span className="feed-tag">ЛЕНТА СООБЩЕСТВА</span></div>
       <form className="news-form" onSubmit={publish}>
-        <input
-          name="author"
-          maxLength="40"
-          placeholder="Автор (необязательно)"
-          aria-label="Автор"
-        />
         <input
           name="title"
           maxLength="100"
@@ -596,10 +553,11 @@ function Community({ news, setNews }) {
           </article>
         ))}
       </div>
-      <h2 className="roster-title">Состав группы</h2>
+      <div className="section-heading roster-title" id="crew"><span className="eyebrow">02 / НАШИ ЛЮДИ</span><h2>Состав группы</h2><span className="feed-tag">{members.length} ЛЕГЕНД</span></div>
       <div className="roster-grid">
-        {members.map((member) => (
+        {members.map((member, index) => (
           <article className="member" key={member.name}>
+            <small className="member-index">/ 0{index + 1}</small>
             <span style={{ color: member.color }}>{member.emoji}</span>
             <h3>{member.name}</h3>
             <p>{member.traits}</p>
@@ -611,12 +569,14 @@ function Community({ news, setNews }) {
 }
 
 function App() {
-  const [tab, setTab] = useState("upgrade");
+  const [tab, setTab] = useState("community");
   const [account, setAccount] = useState(null);
   const [catalog, setCatalog] = useState([]);
   const [news, setNews] = useState([]);
   const [error, setError] = useState("");
   const [locked, setLocked] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
   async function load() {
     setError("");
     try {
@@ -625,18 +585,39 @@ function App() {
       setAccount(me);
       setCatalog(skins.catalog);
       setNews(feed.news);
+      setTab("community");
     } catch (e) {
-      setError(e.message);
+      if (e.status === 401) setAccount(null);
+      else setError(e.message);
+    } finally {
+      setLoading(false);
     }
   }
   useEffect(() => {
     load();
+    function expired() { setAccount(null); setLocked(false); setError(""); }
+    window.addEventListener("pc:unauthorized", expired);
+    return () => window.removeEventListener("pc:unauthorized", expired);
   }, []);
+  async function logout() {
+    if (locked || loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await api("/auth/logout", {});
+      setAccount(null); setNews([]); setCatalog([]); setLocked(false); setTab("community");
+    } catch (e) { setError(e.message); }
+    finally { setLoggingOut(false); }
+  }
+  if (!account) return <div className="app auth-app">
+    <header><div className="brand"><span className="brand-mark">ПК</span><span>ПОТЕНЦИАЛЬНЫЕ<br/><b>КОНДИЦИИ</b></span></div><span className="header-caption">ЗАКРЫТЫЙ КЛУБ / ОТКРЫТЫЕ ВОЗМОЖНОСТИ</span></header>
+    <main>{loading ? <div className="load-state">Загружаем кондиции…</div> : error ? <div className="load-state"><p className="error">{error}</p><button className="primary" onClick={load}>Повторить загрузку</button></div> : <Auth onSuccess={load}/>}</main>
+    <footer><span>Потенциальные кондиции</span><span>СВОИ ЛЮДИ. СВОЙ ГОРОД.</span></footer>
+  </div>;
   const tabs = [
+    ["community", "☰", "Сообщество"],
     ["upgrade", "↗", "Апгрейд"],
     ["inventory", "◇", "Инвентарь"],
     ["history", "◷", "История"],
-    ["community", "☰", "Сообщество"],
   ];
   return (
     <div className="app">
@@ -646,7 +627,7 @@ function App() {
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            setTab("upgrade");
+            if (!locked) setTab("community");
           }}
         >
           <span className="brand-mark">
@@ -680,6 +661,7 @@ function App() {
             </strong>
           </div>
         </div>
+        <div className="profile"><span>{account.username}</span><button className="logout" onClick={logout} disabled={locked || loggingOut}>{loggingOut ? "…" : "Выйти"}</button></div>
       </header>
       <main>
         {error ? (
@@ -713,7 +695,7 @@ function App() {
         <span>
           ПК <b>Потенциальные кондиции</b>
         </span>
-        <span>Внутриигровые скины · Валюта: Минетки</span>
+        <span>Коллекция предметов · Валюта: Минетки</span>
       </footer>
     </div>
   );

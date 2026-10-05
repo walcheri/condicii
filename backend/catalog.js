@@ -1,68 +1,13 @@
-// Внутриигровые цены, целые Минетки. Не рыночные котировки.
+// Внутриигровые цены в Минетках.
 export const catalog = [
-  {
-    id: "p250",
-    weapon: "P250",
-    name: "Песчаная буря",
-    price: 100,
-    color: "#6899ef",
-    kind: "pistol",
-  },
-  {
-    id: "glock",
-    weapon: "Glock-18",
-    name: "Лунная ночь",
-    price: 250,
-    color: "#9270f7",
-    kind: "pistol",
-  },
-  {
-    id: "mp9",
-    weapon: "MP9",
-    name: "Закат",
-    price: 400,
-    color: "#bc77ff",
-    kind: "rifle",
-  },
-  {
-    id: "m4",
-    weapon: "M4A1-S",
-    name: "Неоновый поток",
-    price: 750,
-    color: "#f16ec4",
-    kind: "rifle",
-  },
-  {
-    id: "ak",
-    weapon: "AK-47",
-    name: "Огненный след",
-    price: 1500,
-    color: "#ff7658",
-    kind: "rifle",
-  },
-  {
-    id: "awp",
-    weapon: "AWP",
-    name: "Северное сияние",
-    price: 3000,
-    color: "#59d6cb",
-    kind: "sniper",
-  },
-  {
-    id: "knife",
-    weapon: "★ Керамбит",
-    name: "Градиент",
-    price: 7000,
-    color: "#f4bf63",
-    kind: "knife",
-  },
-  {
-    id: "butterfly",
-    weapon: "★ Нож-бабочка",
-    name: "Тигриный клык",
-    price: 15000,
-    color: "#ffb04f",
-    kind: "knife",
-  },
+  { id: "watermelon", name: "Арбуз", rarity: "Обычный", price: 100, color: "#80d6b4", kind: "watermelon" },
+  { id: "pumpkin", name: "Тыква", rarity: "Обычный", price: 250, color: "#80d6b4", kind: "pumpkin" },
+  { id: "dumplings", name: "Пельмени", rarity: "Обычный", price: 400, color: "#80d6b4", kind: "dumplings" },
+  { id: "water", name: "Яндекс бутылка воды", rarity: "Обычный", price: 750, color: "#80d6b4", kind: "water" },
+  { id: "gta6", name: "Диск GTA VI", rarity: "Редкий", price: 1500, color: "#6db7ff", kind: "disc" },
+  { id: "zalma", name: "Свидание с Залмой", rarity: "Редкий", price: 3000, color: "#6db7ff", kind: "date" },
+  { id: "fox", name: "Лисичка потенциала", rarity: "Эпический", price: 7000, color: "#d79aff", kind: "fox" },
+  { id: "solaris", name: "Солярис", rarity: "Легендарный", price: 15000, color: "#ffcd83", kind: "car" },
 ];
-export const findSkin = (id) => catalog.find((skin) => skin.id === id);
+export const findSkin = (id) => catalog.find((item) => item.id === id);
+export const legacyItems = { p250: "watermelon", glock: "pumpkin", mp9: "dumplings", m4: "water", ak: "gta6", awp: "zalma", knife: "fox", butterfly: "solaris" };
